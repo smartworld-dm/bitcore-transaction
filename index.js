@@ -23,13 +23,6 @@ MyService.dependencies = ['bitcoind'];
 MyService.prototype.start = function(callback) {
   var self = this;
   self.log.info("***** Starting ****");
- /* self.addresses = [
-"2Mxs1sYMGh2dR5tHBLCMnhdjMim8Kvn88wW",
-"2MvVK98nuCj9TsPWJ855njDT733CKwpVdCw",
-"2N3xPEq3AiWXgW6QnyN15efaMqVPC1SBsTd",
-"2N5xZUhG3mTpUhRd6FCFuFXUhwA1TQ9Zy4z",
-"2MvVPENNKb2gLHvnR7WRWjSB3F7HpnfD2ZV"
-  ];*/
   // get the address to watch
   db.getAddress(function(err,data) {
     if(err) {
@@ -67,7 +60,8 @@ MyService.prototype.blockHandler = function(block) {
 	self.log.info('Error getting block info');
 	return;
    }
-   console.log("Block info = ",blockObject);
+   self.log.info("Block Hash = ",blockObject.hash);
+   self.log.info("Block Number = ",blockObject.height);
   });
 }
 
@@ -88,18 +82,13 @@ MyService.prototype.transactionInputHandler = function(input) {
   if (!input.script) {
     return;
   }
-  console.log("Full data\n",input);
-  var address = input.script.toAddress(this.node.network);
-  console.log("Address = ",address.toString());
-  //var amount = this.node.getDetailedTransaction(input.prevTxId.toString());
   this.node.getDetailedTransaction(input.prevTxId.toString('hex'),function(err,data) {
-   if(err) return;
-   console.log("Transaction Output:\n",data.outputs,"\n--------------------------");
+   if(err) {
+	return;
+   };
+   self.log.info("Transaction Hash = ",data.hash);
    data.outputs.map(function(singleOutput,index) {
      console.log("Single Output:\n",singleOutput);
-     //overwrite for testing
-     singleOutput.address = "2Mxs1sYMGh2dR5tHBLCMnhdjMim8Kvn88wW";
-     //***********
      // look for the address we got from db
      if (singleOutput.address && self.addresses.indexOf(singleOutput.address) != -1) {
         self.log.info("Got the matching address");
